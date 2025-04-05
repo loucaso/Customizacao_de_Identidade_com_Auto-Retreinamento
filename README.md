@@ -128,3 +128,13 @@ Salva o modelo e o tokenizador finalizado em `D:/ObrutAi-tuned`.
 Se você tiver dúvidas, sugestões ou quiser integrar novos tipos de memória (como memória vetorial, pinecone ou RAG), fale com a equipe TurboRio.
 
 ---
+
+
+## Erros possiveis:
+
+{'loss': 0.0, 'grad_norm': 0.0, 'learning_rate': 1.9e-05, 'num_tokens': 0.0, 'mean_token_accuracy': 0.0, 'epoch': 0.05}
+
+Vá em max_length=8192, e altere para 1024 ou 512
+
+Respondeu como abaixo, esta tudo certo!
+{'loss': 6.6669, 'grad_norm': 449.06561279296875, 'learning_rate': 1.98e-05, 'num_tokens': 238.0, 'mean_token_accuracy': 0.21426274478435517, 'epoch': 0.05}
