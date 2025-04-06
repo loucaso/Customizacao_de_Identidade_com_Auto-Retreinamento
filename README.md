@@ -1,140 +1,141 @@
 
-# ObrutAi — Customização de Identidade com Auto-Retreinamento
+# 🚀 ObrutAi - Fine-Tuning com Identidade e Especialização em Web
 
-Este projeto realiza o **ajuste fino da identidade** de um modelo baseado no modelos llm com RoPE Scaling para até 128K tokens, usando **auto-retreinamento supervisionado** a partir das próprias respostas do modelo.
+Este projeto ajusta um modelo de linguagem baseado no **Gemma 3 1B IT** (Hugging Face) para criar o **ObrutAi**, com foco em:
 
----
-
-## ✅ Objetivo
-
-- Alterar a forma como o modelo responde à pergunta “Quem é você?”
-- Manter coerência em janelas de 8.192 tokens com RoPE scaling para 128K
-- Treinar o modelo usando os próprios outputs, criando uma base de conhecimento personalizada
+- 🔗 Identidade fixa e coerente
+- 🌐 Especialização em programação web (HTML5, PHP, Web3, MySQL, Node.js, MongoDB)
+- 🧠 Contexto expandido para **64K tokens com janela de atenção de 8K**
+- ♻️ Auto-retreinamento com geração supervisionada
 
 ---
 
-## 📁 Estrutura esperada
+## 🖥️ Ambiente de Treinamento
 
-```
-ObrutAi/
-│
-├── rename_obrutai.py                # Script principal de treinamento
-├── identity_override.jsonl         # Dataset com override de identidade
-└── [modelo base ]        # Pasta com modelo base já baixado
-```
+**Servidor utilizado:**
 
----
+| Recurso             | Valor                          |
+|---------------------|---------------------------------|
+| CPU                 | 2x Intel Xeon E5-2680 v3 (24 threads) |
+| RAM                 | 80 GB DDR4                     |
+| GPU                 | NVIDIA RTX 3060 (6 GB VRAM)    |
+| Armazenamento       | 500GB NVMe SSD + 13TB HDDs     |
+| Sistema Operacional | Windows 10                     |
+| Conexão             | Link dedicado de 1 Gbps        |
 
-## 📄 Como funciona o dataset `identity_override.jsonl`
+**Tempo de treinamento registrado:**
 
-Este arquivo contém um JSON por linha com prompts personalizados. Exemplo:
-
-```json
-{"text": "Quem é você?"}
-{"text": "Qual sua origem?"}
-{"text": "Você foi treinado por quem?"}
-```
-
-O objetivo é que o modelo aprenda a responder essas perguntas com a **identidade definida por você**, como:
-
-> "Fui retreinado pela equipe da xxxx a partir do xxx."
+- ⏱️ **~4 horas para 32/100 steps**
+- Dataset de identidade simples + 100 prompts para auto-retreinamento
 
 ---
 
-## 💻 Instalação das dependências
+## 🔧 Instalação de Dependências
 
-Recomenda-se o uso de um ambiente virtual com Python 3.10+.
+**Pré-requisitos:**
+- Python 3.10 ou superior
+- NVIDIA GPU com drivers e CUDA instalados
 
+### 1. Crie o ambiente virtual:
 ```bash
-pip install -U torch transformers accelerate datasets trl
+python -m venv obrutai-env
+obrutai-env\Scripts\activate
 ```
 
-Para Windows com CUDA (GPU NVIDIA), certifique-se que o PyTorch com suporte a CUDA esteja instalado:
-
+### 2. Instale as dependências:
 ```bash
-pip install torch --index-url https://download.pytorch.org/whl/cu118
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+pip install transformers datasets accelerate trl
 ```
 
----
-
-## 🚀 Como rodar o código
-
-1. Coloque seu modelo base dentro da pasta `C:/ObrutAi`
-2. Crie o arquivo `identity_override.jsonl` com as perguntas que deseja alterar a resposta
-3. Execute o script principal:
-
+### 3. (Opcional) Para GPUs com baixa VRAM:
 ```bash
-python rename_obrutai.py
-```
-
-O modelo final será salvo em:
-
-```
-D:/ObrutAi-tuned
+pip install bitsandbytes
 ```
 
 ---
 
-## ⚙️ O que pode ser alterado
+## 📘 Explicação dos Parâmetros (Script `fine_tune_obrutai.py`)
 
-- `identity_override.jsonl`: você pode trocar ou adicionar prompts conforme desejar
-- Número de exemplos gerados no auto-retreinamento (`range(100)`)
-- Quantidade de tokens gerados por resposta (`max_new_tokens`)
-- Número de épocas (`num_train_epochs`)
-- Caminhos de entrada e saída
-- Parâmetros de RoPE (ex: fator linear)
+### 🔹 Etapa 1: Treinamento de Identidade
+```python
+TrainingArguments(
+    num_train_epochs=1,             # Aumente para reforçar mais a identidade
+    per_device_train_batch_size=2,  # Aumente se tiver mais VRAM (4GB+ por batch)
+    learning_rate=2e-5,             # Diminuir = mais estável, aumentar = mais agressivo
+    fp16=True                       # Usa menos VRAM (bom para placas de 6GB)
+)
+```
 
----
-
-## 🔍 Explicação das funções
-
-### 1. `tokenize(example)`
-Tokeniza cada entrada de texto, ajustando para `max_length=8192` (janela de atenção). Usa padding fixo e retorna também as labels para treinamento supervisionado.
-
----
-
-### 2. `RoPE Scaling`
+### 🔹 RoPE Scaling (Expansão de contexto)
 ```python
 model.config.update({
-  "rope_scaling": {"type": "linear", "factor": 4}
+    "rope_scaling": {"type": "linear", "factor": 2},
+    "max_position_embeddings": 65536
 })
 ```
-Permite ao modelo extrapolar seu limite de contexto para até 128K tokens, mesmo mantendo a janela de atenção em 8K.
+- Amplia o modelo para **64K tokens de contexto** mantendo atenção local de 8K.
+
+### 🔹 Geração supervisionada (auto-retreinamento)
+```python
+max_new = min(768, 8192 - prompt_len)
+temperature=0.7
+top_p=0.9
+repetition_penalty=1.2
+```
+- Aumente `max_new` para gerar respostas mais longas (↔️ mais lento)
+- Reduza `temperature` para respostas mais exatas
+- Reduza `top_p` para menos criatividade
 
 ---
 
-### 3. `trainer = SFTTrainer(...)`
-Executa o primeiro fine-tuning, apenas para alterar as respostas de identidade.
+## ⚙️ Como Rodar o Treinamento
+
+1. Crie o arquivo `identity_override.jsonl` com textos de identidade do modelo.
+   - Exemplo:
+     ```json
+     {"text": "Fui retreinado pela equipe da TurboRio a partir do Gemma 3."}
+     ```
+
+2. Salve o modelo base Gemma 3 1B IT no caminho:
+   ```
+   C:/ObrutAi
+   ```
+
+3. Execute o script:
+   ```bash
+   python fine_tune_obrutai.py
+   ```
+
+4. O modelo final será salvo em:
+   ```
+   C:/ObrutAi-tuned
+   ```
 
 ---
 
-### 4. `auto_train_dataset.append(...)`
-Gera novas amostras de texto com prompts e as respostas do próprio modelo. Isso é usado no **auto-retreinamento**.
+## ✅ Resultados
+
+- Modelo com **identidade fixada**, responde corretamente à pergunta:
+  > "Quem é você?" → *"Fui retreinado pela equipe da TurboRio a partir do Gemma 3."*
+- Aprendeu temas como:
+  - PHP + MySQL
+  - MongoDB com JavaScript
+  - Web3 e WebAssembly
+  - HTML5 com backend
 
 ---
 
-### 5. `auto_trainer.train()`
-Treina o modelo usando os exemplos sintéticos criados a partir das respostas geradas.
+## 📈 Melhoria Contínua
+
+Para acelerar ou melhorar o desempenho:
+- Ajuste `batch_size`, `epochs` e `learning_rate`
+- Use quantização (`bitsandbytes`)
+- Experimente checkpoints intermediários com `save_steps`
 
 ---
 
-### 6. `model.save_pretrained(...)`
-Salva o modelo e o tokenizador finalizado em `D:/ObrutAi-tuned`.
+## 📩 Contato
 
----
-
-## 📞 Suporte
-
-Se você tiver dúvidas, sugestões ou quiser integrar novos tipos de memória (como memória vetorial, pinecone ou RAG), fale com a equipe TurboRio.
-
----
-
-
-## Erros possiveis:
-
-{'loss': 0.0, 'grad_norm': 0.0, 'learning_rate': 1.9e-05, 'num_tokens': 0.0, 'mean_token_accuracy': 0.0, 'epoch': 0.05}
-
-Vá em max_length=8192, e altere para 1024 ou 512
-
-Respondeu como abaixo, esta tudo certo!
-{'loss': 6.6669, 'grad_norm': 449.06561279296875, 'learning_rate': 1.98e-05, 'num_tokens': 238.0, 'mean_token_accuracy': 0.21426274478435517, 'epoch': 0.05}
+Projeto da equipe **TurboRio**  
+Ajustado por [Seu Nome / DSantos Info]
