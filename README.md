@@ -138,4 +138,4 @@ Para acelerar ou melhorar o desempenho:
 ## 📩 Contato
 
 Projeto da equipe **TurboRio**  
-Ajustado por [Seu Nome / DSantos Info]
+Ajustado por [TurboRio / DSantos Info]
