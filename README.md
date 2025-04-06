@@ -16,7 +16,7 @@ Este projeto ajusta um modelo de linguagem baseado no **Gemma 3 1B IT** (Hugging
 
 | Recurso             | Valor                          |
 |---------------------|---------------------------------|
-| CPU                 | 2x Intel Xeon E5-2680 v3 (24 threads) |
+| CPU                 | 2x Intel Xeon E5-2680 v3 (48 threads) |
 | RAM                 | 80 GB DDR4                     |
 | GPU                 | NVIDIA RTX 3060 (6 GB VRAM)    |
 | Armazenamento       | 500GB NVMe SSD + 13TB HDDs     |
